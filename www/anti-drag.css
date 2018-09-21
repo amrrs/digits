@@ -1,0 +1,8 @@
+img {
+  pointer-events: none ;
+  user-select: none;
+  -webkit-user-select: none;
+ -khtml-user-select: none;
+ -moz-user-select: none;
+ -o-user-select: none;
+}

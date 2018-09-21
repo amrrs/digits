@@ -7,8 +7,9 @@ library(htmlwidgets)
 
 
 # load pickled cnn
+setwd("~/Documents/projects/digits/digits")
 cnn <- load_model_hdf5("www/cnn")
-#cnn <- load_model_hdf5("/srv/shiny-server/mnist/www/cnn")
+cnn <- load_model_hdf5("/srv/shiny-server/mnist/www/cnn")
 
 # define function to convert pixel board to matrix and then to array, while normalizing data
 pixels_array <- function(pixels, max_val){
@@ -53,12 +54,12 @@ pixels_barplot <- function(probabilities = softmax(10)){
           axis.text.y=element_blank(),
           axis.ticks.y=element_blank(),
           axis.text.x = element_text(size=16)) +
-    scale_fill_manual(values = c("#ccb1b1", "#ae8383"))
+    scale_fill_manual(values = c("#7F7F7F", "#337AB7"))
 }
 
 # preemptively define random pixel board parameters
 brush <- matrix(c(0.25, 0.5, 0.25,   0.25, 1.0, 0.25,   0.25, 0.5, 0.25),    3, 3)
-params = list(fill = list(color = "#ae8383"))
+params = list(fill = list(color = "#337AB7"))
 
 # define random probabilities for later graphical render
 probabilities <- softmax(10)
@@ -66,23 +67,23 @@ probabilities <- softmax(10)
 # define shiny user interface
 ui <- shinyUI(
   fluidPage(
+    theme = "anti-drag.css", 
     column(12, titlePanel("Pattern Recognition with Convolutional Neural Network"), align = "center"),
     # first column
     column(5, offset = 1,
       # pixel board
       h3("Input"),
       withSpinner(
-        shiny_pixels_output("pixels", width = "100%")
+        shiny_pixels_output("pixels", width = "100%"),
+        color = getOption("spinner.color", default = "#337AB7")
         ),
       align = "center"
     ),
     #second column
-    column(5,
+    column(5, offerset = -1,
       # place barplot
       h3("Output"),
-      withSpinner(
-        plotOutput("barplot")
-        ),
+        plotOutput("barplot"),
       br(),
       # set of buttons
       actionButton("reset", "Reset", width = "45%"),
