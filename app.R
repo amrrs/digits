@@ -11,7 +11,7 @@ ipak(c("shiny", "keras", "ggplot2", "pixels", "RCurl", "htmlwidgets", "shinyWidg
 # load pickled cnn
 #setwd("~/Documents/projects/digits/digits")
 #cnn <- load_model_hdf5("www/cnn")
-cnn <- load_model_hdf5("/srv/shiny-server/mnist/www/cnn")
+cnn <- load_model_hdf5("/srv/shiny-server/digits/www/cnn")
 
 # define function to convert pixel board to matrix and then to array, while normalizing data
 pixels_array <- function(pixels, max_val){
