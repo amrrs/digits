@@ -1,9 +1,11 @@
-library(keras)
-library(shiny)
-library(pixels)
-library(ggplot2)
-library(shinycssloaders)
-library(htmlwidgets)
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg))
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+ipak(c("shiny", "keras", "ggplot2", "pixels", "RCurl", "htmlwidgets", "shinyWidgets", "shinycssloaders"))
 
 
 # load pickled cnn
