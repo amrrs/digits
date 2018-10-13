@@ -2,17 +2,8 @@ setwd("~/Documents/projects/digits/digits/")
 
 fileName <- './www/src.txt'
 text_src <- readChar(fileName, file.info(fileName)$size)
-
-ipak <- function(pkg){
-  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-  if (length(new.pkg))
-    install.packages(new.pkg, dependencies = TRUE)
-  sapply(pkg, require, character.only = TRUE)
-}
-
 digits <- data.frame(num = 0:9,txt = c("zero","one","two","three","four","five","six","seven","eight","nine"))
-
-ipak(c("shiny", "keras", "shinyjs", "V8", "rvest", "magick", "png", "plotly", "colorspace", "XML", "openssl"))
+lapply(c("shiny", "keras", "shinyjs", "V8", "rvest", "magick", "png", "plotly", "colorspace", "XML", "openssl"), require, character.only = TRUE)
 
 max_one <- function(matrix){
   max = max(matrix)
@@ -52,9 +43,10 @@ ui <- fluidPage(
   theme = "anti-drag.css", 
   column(12, titlePanel("Pattern Recognition with Convolutional Neural Network"), align = "center", br()),
   column(width = 5, offset = 1, align = "center",
-         h2("Draw Digit Between Zero and Nine"),
+         h3("Draw Digit Between Zero and Nine"),
+         br(),
          div(class="wrapper",
-             HTML("<canvas id='signature-pad' class='signature-pad' width=600 height=600></canvas>")),
+             HTML("<canvas id='signature-pad' class='signature-pad' width=400 height=400></canvas>")),
          br(),
          div(class="wrapper", style="height:70px;",
              HTML("<div> <button class='button' 
@@ -62,17 +54,12 @@ ui <- fluidPage(
                   <button class='button' 
                   id='clear'>Clear</button></div>"))),
   column(width = 5, align = "center", 
-         h2("Softmax Probability of Most Likely Digit"),
-         plotlyOutput("probabilities",  width="600px", height="600px")
+         h3("Softmax Probability of Most Likely Digit"),
+         br(),
+         plotlyOutput("probabilities",  width="400px", height="400px")
          )
   )
 
-
-input$
-output
-
-ui
-server
 
 
 server <- function(input, output, session) {

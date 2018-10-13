@@ -3,8 +3,8 @@ shinyjs.init = function() {
 var signaturePad = new SignaturePad(document.getElementById('signature-pad'), {
   backgroundColor: 'rgb(255, 255, 255)',
   penColor: '#337AB7',
-  maxWidth: 20,
-  minWidth: 19
+  maxWidth: 13,
+  minWidth: 12
 });
 var saveButton = document.getElementById('save');
 var cancelButton = document.getElementById('clear');
