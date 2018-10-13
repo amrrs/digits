@@ -5,18 +5,28 @@ text_src <- readChar(fileName, file.info(fileName)$size)
 digits <- data.frame(num = 0:9,txt = c("zero","one","two","three","four","five","six","seven","eight","nine"))
 lapply(c("shiny", "keras", "shinyjs", "V8", "rvest", "magick", "png", "plotly", "colorspace", "XML", "openssl"), require, character.only = TRUE)
 
+max_inverse <- function(matrix){
+  matrix <- abs(matrix - 1)
+  return(matrix)
+}
+
 max_one <- function(matrix){
   max = max(matrix)
   matrix = matrix / max
-  matrix = abs(matrix - 1)
   return(matrix)
 }
+
+max_limit <- function(matrix, limit){
+  matrix[matrix > limit] <- limit
+  return(matrix)
+}
+
 transfer_src <- function(src = input$source){
   kern <- matrix(0, ncol = 3, nrow = 3)
-  kern[c(1,3), c(1,3)] <- 0.90
-  kern[2, c(1,3)] <- 0.93
-  kern[c(1,3), 2] <- 0.93
-  kern[2,2] <- 0.95
+  kern[c(1,3), c(1,3)] <- 0.1
+  kern[2, c(1,3)] <- 0.12
+  kern[c(1,3), 2] <- 0.12
+  kern[2,2] <- 0.15
   img <- gsub("data:image/png;base64,", replacement = "", x = src)
   img <- image_read(base64_decode(img)) %>%
     image_convert(colorspace = "gray") %>%
@@ -24,6 +34,9 @@ transfer_src <- function(src = input$source){
     image_convolve(kern) %>%
     image_write() %>%
     readPNG() %>%
+    max_inverse %>%
+    max_one() %>%
+    max_limit(limit = 0.8) %>%
     max_one()
   return(img)
 }
@@ -56,8 +69,12 @@ ui <- fluidPage(
   column(width = 5, align = "center", 
          h3("Softmax Probability of Most Likely Digit"),
          br(),
+         #plotOutput("image"),
          plotlyOutput("probabilities",  width="400px", height="400px")
-         )
+         ),
+  column(width = 12, align = "center", 
+         h4("Due to pre-processed pixelation of image prior to input, smaller scale figures underperform")
+  )
   )
 
 
@@ -95,6 +112,12 @@ server <- function(input, output, session) {
                  y = 0, x = 0, textfont = list(size = 48))
   })
   
+  # output$image <- renderPlot({
+  #   source <- ifelse(boolean$active == FALSE, text_src, input$source)
+  #   transfer_src(source) %>%
+  #     image()
+  # })
+  # 
 }
 
 shinyApp(ui, server)
