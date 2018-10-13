@@ -1,3 +1,8 @@
+setwd("~/Documents/projects/digits/digits/")
+
+fileName <- './www/src.txt'
+text_src <- readChar(fileName, file.info(fileName)$size)
+
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))
@@ -5,120 +10,104 @@ ipak <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 
-ipak(c("shiny", "keras", "ggplot2", "pixels", "RCurl", "htmlwidgets", "shinyWidgets", "shinycssloaders"))
+digits <- data.frame(num = 0:9,txt = c("zero","one","two","three","four","five","six","seven","eight","nine"))
 
+ipak(c("shiny", "keras", "shinyjs", "V8", "rvest", "magick", "png", "plotly", "colorspace", "XML", "openssl"))
 
-# load pickled cnn
-#setwd("~/Documents/projects/digits/digits")
-#cnn <- load_model_hdf5("www/cnn")
-cnn <- load_model_hdf5("/srv/shiny-server/digits/www/cnn")
-
-# define function to convert pixel board to matrix and then to array, while normalizing data
-pixels_array <- function(pixels, max_val){
-  matrix <- matrix(pixels,28, 28, byrow = TRUE)
-  matrix <- ifelse(matrix < max_val, matrix, max_val)
-  #matrix <- apply(t(matrix),2,rev)
-  return(array_reshape(matrix,c(1, 28, 28, 1)))
+max_one <- function(matrix){
+  max = max(matrix)
+  matrix = matrix / max
+  matrix = abs(matrix - 1)
+  return(matrix)
+}
+transfer_src <- function(src = input$source){
+  kern <- matrix(0, ncol = 3, nrow = 3)
+  kern[c(1,3), c(1,3)] <- 0.90
+  kern[2, c(1,3)] <- 0.93
+  kern[c(1,3), 2] <- 0.93
+  kern[2,2] <- 0.95
+  img <- gsub("data:image/png;base64,", replacement = "", x = src)
+  img <- image_read(base64_decode(img)) %>%
+    image_convert(colorspace = "gray") %>%
+    image_sample(c(28,28)) %>%
+    image_convolve(kern) %>%
+    image_write() %>%
+    readPNG() %>%
+    max_one()
+  return(img)
 }
 
-# define function to predict probabilities from pixel board
-pixels_predict <- function(model, pixels, max_val = 1){
-  array <- pixels_array(pixels, max_val = max_val)
-  probabilities <- predict_proba(model, array)
-  return(as.vector(probabilities))
-}
+placeholder <- runif(10)
+placeholder <- placeholder/sum(placeholder)
 
-# define function to return a specified length of randomn uniform, softmaxed probabilities
-softmax <- function(length){
-  vector <- runif(length)
-  vector <- vector/sum(vector)
-  return(vector)
-}
+model <- load_model_hdf5("./www/cnn")
 
-# create discrete probability distribution from vector
-pixels_barplot <- function(probabilities = softmax(10)){
-  # create dataframe with discrete outcomes and predicted probabilities
-  df <- data.frame(num = as.factor(0:(length(probabilities)-1)), prob = as.vector(probabilities))
-  # create additional variable to indicate whether or not a row holds the maximum probabilities
-  df$max <- (max(df$prob) == df$prob)
-  # call ggplot
-  ggplot(df, aes(num, y = prob, fill = max)) + 
-    geom_col() + 
-    geom_text(aes(label = scales::percent(df$prob), y = prob), vjust = -.5) +
-    theme_minimal() + 
-    labs(title ="Probability Distribution", 
-         y = NULL, 
-         x = NULL) + 
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          plot.title = element_text(hjust = 0.5),
-          legend.position="none",
-          axis.title.y=element_blank(),
-          axis.text.y=element_blank(),
-          axis.ticks.y=element_blank(),
-          axis.text.x = element_text(size=16)) +
-    scale_fill_manual(values = c("#7F7F7F", "#337AB7"))
-}
-
-# preemptively define random pixel board parameters
-brush <- matrix(c(0.25, 0.5, 0.25,   0.25, 1.0, 0.25,   0.25, 0.5, 0.25),    3, 3)
-params = list(fill = list(color = "#337AB7"))
-
-# define random probabilities for later graphical render
-probabilities <- softmax(10)
-
-# define shiny user interface
-ui <- shinyUI(
-  fluidPage(
-    theme = "anti-drag.css", 
-    column(12, titlePanel("Pattern Recognition with Convolutional Neural Network"), align = "center"),
-    # first column
-    column(5, offset = 1,
-      # pixel board
-      h3("Input"),
-      withSpinner(
-        shiny_pixels_output("pixels", width = "100%"),
-        color = getOption("spinner.color", default = "#337AB7")
-        ),
-      align = "center"
-    ),
-    #second column
-    column(5, offerset = -1,
-      # place barplot
-      h3("Output"),
-        plotOutput("barplot"),
-      br(),
-      # set of buttons
-      actionButton("reset", "Reset", width = "45%"),
-      actionButton("submit", "Submit", width = "45%"),
-      align = "center"
-    )
+ui <- fluidPage(
+  
+  includeCSS("./www/style.css"),
+  tags$head(tags$script(src = "https://cdn.jsdelivr.net/npm/signature_pad@2.3.2/dist/signature_pad.min.js")),
+  shinyjs::useShinyjs(),
+  shinyjs::extendShinyjs(script = "./www/pad.js"),
+  
+  theme = "anti-drag.css", 
+  column(12, titlePanel("Pattern Recognition with Convolutional Neural Network"), align = "center", br()),
+  column(width = 5, offset = 1, align = "center",
+         h2("Draw Digit Between Zero and Nine"),
+         div(class="wrapper",
+             HTML("<canvas id='signature-pad' class='signature-pad' width=600 height=600></canvas>")),
+         br(),
+         div(class="wrapper", style="height:70px;",
+             HTML("<div> <button class='button' 
+                  id='save'>Submit</button> 
+                  <button class='button' 
+                  id='clear'>Clear</button></div>"))),
+  column(width = 5, align = "center", 
+         h2("Softmax Probability of Most Likely Digit"),
+         plotlyOutput("probabilities",  width="600px", height="600px")
+         )
   )
-)
 
 
-# define shiny server
-server <- shinyServer(function(input, output, session) {
+input$
+output
+
+ui
+server
+
+
+server <- function(input, output, session) {
   
-  # call barplot
-  output$barplot <- renderPlot({ pixels_barplot(probabilities) })
-  # call pixel board
-  output$pixels <- shiny_render_pixels(show_pixels(brush = brush, params = params, size = c(450, 450)))
-
-  # upon submit button
-  observeEvent(input$submit, {
-    # predict via cnn
-    probabilities <- pixels_predict(model = cnn, pixels = input$pixels)
-    # update plot
-    output$barplot <- renderPlot({ pixels_barplot(probabilities) }, height = 400)
+  boolean <- reactiveValues(active = FALSE)
+  
+  onclick("save", { 
+    boolean$active <- TRUE 
   })
   
-  # upon submit button
-  observeEvent(input$reset, {
-    # reset pixel board
-    output$pixels <- shiny_render_pixels( show_pixels(brush = brush, params = params, size = c(450, 450)) )
+  output$probabilities <- renderPlotly({
+    
+    source <- ifelse(boolean$active == FALSE, text_src, input$source)
+    
+    img <- transfer_src(source) %>%
+      array_reshape(c(1, 28, 28, 1))
+    
+    probabilities <- as.vector(predict_proba(model, img))
+    probabilities <- probabilities + (runif(10)/1000)
+    probabilities <- probabilities/sum(probabilities)
+    
+      data.frame(h = c(as.character(which.max(probabilities)-1), "other"), 
+                 p = c(max(probabilities),
+                       sum(probabilities[-(which.max(probabilities))]))) %>%
+        plot_ly(hoverinfo = "none") %>%
+        add_pie(hole = 0.7, marker = list(colors = c("#337AB7", "lightgray")), 
+                rotation = runif(1)*360, labels = ~h, values = ~p, textinfo = "none") %>%
+        layout(title = "",  showlegend = F,
+               xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE, fixedrange=TRUE),
+               yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE, fixedrange=TRUE)) %>%
+        config(displayModeBar = FALSE, scrollZoom = FALSE, dragmode = "none", bgcolor= 'rgba(0,0,0,0)') %>%
+        add_text(text = paste0(digits[which.max(probabilities),"txt"],"\n",round(max(probabilities)*100),"%"),
+                 y = 0, x = 0, textfont = list(size = 48))
   })
   
-})
+}
 
-# call application
 shinyApp(ui, server)

@@ -1,0 +1,39 @@
+.signature-pad {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 600px;
+  height: 600px;
+  border: 1px solid gray;
+  border-radius: 8px;
+}
+
+.wrapper {
+  position: relative;
+  width: 600px;
+  height: 600px;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.button {
+    border: 1px solid gray;
+    background-color: white;
+    color: black;
+    padding: 0px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 20px;
+    width: 297px;
+    border-radius: 8px;
+    -webkit-transition-duration: 0.8s; /* Safari */
+    transition-duration: 0.8s;
+}
+
+.button:hover {
+  background-color: lightgray;
+}
