@@ -117,6 +117,8 @@ server <- function(input, output, session) {
     probabilities <- probabilities + (runif(10)/1000)
     probabilities <- probabilities/sum(probabilities)
     
+    
+    #print probability scores
 
     print(round(ifelse(is.na(probabilities),0,probabilities) * 100))
     
