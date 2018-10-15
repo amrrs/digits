@@ -117,6 +117,8 @@ server <- function(input, output, session) {
     probabilities <- probabilities + (runif(10)/1000)
     probabilities <- probabilities/sum(probabilities)
     
+    print(round(max(probabilities)*100),"%"))
+    
       data.frame(h = c(as.character(which.max(probabilities)-1), "other"), 
                  p = c(max(probabilities),
                        sum(probabilities[-(which.max(probabilities))]))) %>%
