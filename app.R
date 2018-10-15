@@ -1,4 +1,4 @@
-setwd("~/Documents/projects/digits/digits/")
+#setwd("~/Documents/projects/digits/digits/")
 
 fileName <- './www/src.txt'
 text_src <- readChar(fileName, file.info(fileName)$size)
@@ -61,7 +61,7 @@ ui <- fluidPage(
          div(class="wrapper",
              HTML("<canvas id='signature-pad' class='signature-pad' width=400 height=400></canvas>")),
          br(),
-         div(class="wrapper", style="height:70px;",
+         div(class="wrapper", style="height:70px; display: none;",
              HTML("<div> <button class='button' 
                   id='save'>Submit</button> 
                   <button class='button' 
@@ -83,10 +83,29 @@ server <- function(input, output, session) {
   
   boolean <- reactiveValues(active = FALSE)
   
-  onclick("save", { 
-    boolean$active <- TRUE 
+  
+ # onclick("save",{
+#    boolean$active <- TRUE
+ # })
+  
+  onevent("mouseleave","signature-pad",{
+     
+     delay(10,  boolean$active <- TRUE)
+   
+     click("save")
+  
+     print(boolean$active)
+   
+     click("clear")
   })
   
+  
+  
+ # onevent("mouseleave","signature-pad", expr = { 
+#    boolean$active <- TRUE 
+ # })
+  
+ 
   output$probabilities <- renderPlotly({
     
     source <- ifelse(boolean$active == FALSE, text_src, input$source)
