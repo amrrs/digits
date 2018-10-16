@@ -19,4 +19,4 @@ devtools::install_github("rstudio/keras")
 keras::install_keras()
 ```
 
-* Run the app and Enjoy your Deep Learning App!
+* Run the app by executing the code or click Run icon in your RStudio and Enjoy your Deep Learning App!
